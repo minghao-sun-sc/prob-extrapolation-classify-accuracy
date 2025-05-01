@@ -342,4 +342,95 @@ def train_deep_kernel(X, y, epsilon_min=0.01, lr=0.01, training_iter=50000, hidd
     
     model.eval()
     likelihood.eval()
-    return likelihood, model, losses 
+    return likelihood, model, losses
+
+
+class GPComboKernel(gpytorch.models.ExactGP):
+    """Gaussian Process with a combination of kernels for better modeling"""
+    def __init__(self, train_x, train_y, likelihood, kernel_type="rbf+matern", epsilon_min=0.05, with_priors=True):
+        super(GPComboKernel, self).__init__(train_x, train_y, likelihood)
+        
+        # Power law mean function parameters
+        self.register_parameter(
+            name="epsilon", 
+            parameter=torch.nn.Parameter(torch.tensor(0.1))
+        )
+        self.register_parameter(
+            name="alpha", 
+            parameter=torch.nn.Parameter(torch.tensor(0.5))
+        )
+        self.register_parameter(
+            name="saturation", 
+            parameter=torch.nn.Parameter(torch.tensor(0.9))
+        )
+        
+        # Covariance module - combination of kernels
+        if kernel_type == "rbf+matern":
+            # Combination of RBF and Matern kernels
+            self.covar_module = ScaleKernel(
+                AdditiveKernel(
+                    RBFKernel(ard_num_dims=1),
+                    MaternKernel(nu=2.5, ard_num_dims=1)
+                )
+            )
+        elif kernel_type == "rbf+periodic":
+            # Combination of RBF and Periodic kernels for potential oscillatory patterns
+            self.covar_module = ScaleKernel(
+                AdditiveKernel(
+                    RBFKernel(ard_num_dims=1),
+                    PeriodicKernel(ard_num_dims=1)
+                )
+            )
+        else:
+            # Default to RBF kernel
+            self.covar_module = ScaleKernel(RBFKernel(ard_num_dims=1))
+        
+        # Constraints
+        self.register_constraint("epsilon", gpytorch.constraints.Interval(epsilon_min, 1.0))
+        self.register_constraint("alpha", gpytorch.constraints.Positive())
+        self.register_constraint("saturation", gpytorch.constraints.Interval(0.5, 1.0))
+        
+        # Set priors if requested
+        if with_priors:
+            # Priors for mean function parameters
+            self.epsilon_prior = gpytorch.priors.GammaPrior(1.0, 10.0)
+            self.register_prior(
+                "epsilon_prior",
+                self.epsilon_prior,
+                lambda m: m.epsilon,
+                lambda m, v: m._set_epsilon(v)
+            )
+            
+            self.alpha_prior = gpytorch.priors.GammaPrior(1.0, 2.0)
+            self.register_prior(
+                "alpha_prior",
+                self.alpha_prior,
+                lambda m: m.alpha,
+                lambda m, v: m._set_alpha(v)
+            )
+            
+            self.saturation_prior = gpytorch.priors.UniformPrior(0.5, 1.0)
+            self.register_prior(
+                "saturation_prior",
+                self.saturation_prior,
+                lambda m: m.saturation,
+                lambda m, v: m._set_saturation(v)
+            )
+    
+    def _set_epsilon(self, value):
+        self.initialize(epsilon=value)
+    
+    def _set_alpha(self, value):
+        self.initialize(alpha=value)
+    
+    def _set_saturation(self, value):
+        self.initialize(saturation=value)
+    
+    def forward(self, x):
+        # Power law mean function: saturation - epsilon * (x ** -alpha)
+        mean_x = self.saturation - self.epsilon * (x ** -self.alpha)
+        
+        # Covariance
+        covar_x = self.covar_module(x)
+        
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)

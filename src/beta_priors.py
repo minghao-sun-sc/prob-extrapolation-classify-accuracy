@@ -4,6 +4,13 @@ import gpytorch
 import scipy.stats
 import matplotlib.pyplot as plt
 from scipy import stats
+import torch
+import gpytorch
+from torch.distributions import Beta
+import sys
+sys.path.append('../src/')
+from models import GPPowerLaw
+from matern_kernels import GPPowerLawMatern as GPMatern
 
 class BetaPrior(gpytorch.priors.Prior):
     """
@@ -438,4 +445,226 @@ def train_gp_with_beta_prior(X, y, alpha=2, beta=2, epsilon_min=0.01, lr=0.01,
         
     model.eval()
     likelihood.eval()
-    return likelihood, model, losses 
+    return likelihood, model, losses
+
+
+class BetaPrior(gpytorch.priors.Prior):
+    """Beta prior distribution for parameters that are bounded between 0 and 1"""
+    def __init__(self, alpha, beta, validate_args=None):
+        self.alpha = alpha
+        self.beta = beta
+        self._beta_dist = Beta(alpha, beta, validate_args=validate_args)
+        super().__init__(validate_args=validate_args)
+    
+    def log_prob(self, x):
+        return self._beta_dist.log_prob(x)
+    
+    def sample(self, sample_shape=torch.Size()):
+        return self._beta_dist.sample(sample_shape)
+    
+    @property
+    def _extended_shape(self):
+        return torch.Size([])
+
+class GPPowerLawWithBetaPrior(gpytorch.models.ExactGP):
+    """Gaussian Process with Power Law mean function and Beta prior for saturation parameter"""
+    def __init__(self, train_x, train_y, likelihood, epsilon_min=0.05, with_priors=True):
+        super(GPPowerLawWithBetaPrior, self).__init__(train_x, train_y, likelihood)
+        
+        # Power law mean function parameters
+        self.register_parameter(
+            name="epsilon", 
+            parameter=torch.nn.Parameter(torch.tensor(0.1))
+        )
+        self.register_parameter(
+            name="alpha", 
+            parameter=torch.nn.Parameter(torch.tensor(0.5))
+        )
+        self.register_parameter(
+            name="saturation", 
+            parameter=torch.nn.Parameter(torch.tensor(0.9))
+        )
+        
+        # Covariance module
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            gpytorch.kernels.RBFKernel(ard_num_dims=1)
+        )
+        
+        # Constraints
+        self.register_constraint("epsilon", gpytorch.constraints.Interval(epsilon_min, 1.0))
+        self.register_constraint("alpha", gpytorch.constraints.Positive())
+        self.register_constraint("saturation", gpytorch.constraints.Interval(0.5, 1.0))
+        
+        # Set priors if requested
+        if with_priors:
+            # Use Beta prior for saturation parameter (favoring higher values)
+            self.saturation_prior = BetaPrior(8.0, 2.0)
+            self.register_prior(
+                "saturation_prior",
+                self.saturation_prior,
+                lambda m: m.saturation,
+                lambda m, v: m._set_saturation(v)
+            )
+            
+            # Other priors
+            self.epsilon_prior = gpytorch.priors.GammaPrior(1.0, 10.0)
+            self.register_prior(
+                "epsilon_prior",
+                self.epsilon_prior,
+                lambda m: m.epsilon,
+                lambda m, v: m._set_epsilon(v)
+            )
+            
+            self.alpha_prior = gpytorch.priors.GammaPrior(1.0, 2.0)
+            self.register_prior(
+                "alpha_prior",
+                self.alpha_prior,
+                lambda m: m.alpha,
+                lambda m, v: m._set_alpha(v)
+            )
+            
+            # Kernel priors
+            self.covar_module.base_kernel.lengthscale_prior = gpytorch.priors.GammaPrior(3.0, 6.0)
+            self.covar_module.outputscale_prior = gpytorch.priors.GammaPrior(2.0, 0.15)
+    
+    def _set_epsilon(self, value):
+        self.initialize(epsilon=value)
+    
+    def _set_alpha(self, value):
+        self.initialize(alpha=value)
+    
+    def _set_saturation(self, value):
+        self.initialize(saturation=value)
+    
+    def forward(self, x):
+        # Power law mean function: saturation - epsilon * (x ** -alpha)
+        mean_x = self.saturation - self.epsilon * (x ** -self.alpha)
+        
+        # Covariance
+        covar_x = self.covar_module(x)
+        
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+class GPArctanWithBetaPrior(gpytorch.models.ExactGP):
+    """Gaussian Process with Arctan mean function and Beta prior for saturation parameter"""
+    def __init__(self, train_x, train_y, likelihood, epsilon_min=0.05, with_priors=True):
+        super(GPArctanWithBetaPrior, self).__init__(train_x, train_y, likelihood)
+        
+        # Arctan mean function parameters
+        self.register_parameter(
+            name="epsilon", 
+            parameter=torch.nn.Parameter(torch.tensor(0.1))
+        )
+        self.register_parameter(
+            name="alpha", 
+            parameter=torch.nn.Parameter(torch.tensor(0.5))
+        )
+        self.register_parameter(
+            name="saturation", 
+            parameter=torch.nn.Parameter(torch.tensor(0.9))
+        )
+        
+        # Covariance module
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            gpytorch.kernels.RBFKernel(ard_num_dims=1)
+        )
+        
+        # Constraints
+        self.register_constraint("epsilon", gpytorch.constraints.Interval(epsilon_min, 1.0))
+        self.register_constraint("alpha", gpytorch.constraints.Positive())
+        self.register_constraint("saturation", gpytorch.constraints.Interval(0.5, 1.0))
+        
+        # Set priors if requested
+        if with_priors:
+            # Use Beta prior for saturation parameter (favoring higher values)
+            self.saturation_prior = BetaPrior(8.0, 2.0)
+            self.register_prior(
+                "saturation_prior",
+                self.saturation_prior,
+                lambda m: m.saturation,
+                lambda m, v: m._set_saturation(v)
+            )
+            
+            # Other priors
+            self.epsilon_prior = gpytorch.priors.GammaPrior(1.0, 10.0)
+            self.register_prior(
+                "epsilon_prior",
+                self.epsilon_prior,
+                lambda m: m.epsilon,
+                lambda m, v: m._set_epsilon(v)
+            )
+            
+            self.alpha_prior = gpytorch.priors.GammaPrior(1.0, 2.0)
+            self.register_prior(
+                "alpha_prior",
+                self.alpha_prior,
+                lambda m: m.alpha,
+                lambda m, v: m._set_alpha(v)
+            )
+            
+            # Kernel priors
+            self.covar_module.base_kernel.lengthscale_prior = gpytorch.priors.GammaPrior(3.0, 6.0)
+            self.covar_module.outputscale_prior = gpytorch.priors.GammaPrior(2.0, 0.15)
+    
+    def _set_epsilon(self, value):
+        self.initialize(epsilon=value)
+    
+    def _set_alpha(self, value):
+        self.initialize(alpha=value)
+    
+    def _set_saturation(self, value):
+        self.initialize(saturation=value)
+    
+    def forward(self, x):
+        # Arctan mean function: saturation - epsilon * (2/pi) * arctan(alpha/x)
+        mean_x = self.saturation - self.epsilon * (2/torch.pi) * torch.atan(self.alpha/x)
+        
+        # Covariance
+        covar_x = self.covar_module(x)
+        
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+# Your data points
+X = torch.tensor([60, 94, 147, 230, 360])
+y = torch.tensor([0.6067, 0.6240, 0.6429, 0.6574, 0.6664])
+
+# Initialize the model with power law and standard priors
+likelihood = gpytorch.likelihoods.GaussianLikelihood()
+model = GPPowerLaw(X, y, likelihood, epsilon_min=0.05, with_priors=True)
+
+# Train the model
+likelihood, model, losses = models.train_gp(likelihood, model, X, y, max_iters=50000, lr=0.01)
+
+# Make predictions
+with torch.no_grad():
+    test_x = torch.linspace(50, 30000, 29950).long()
+    predictions = likelihood(model(test_x))
+    mean = predictions.mean.numpy()
+    std = predictions.stddev.numpy()
+    
+    # Use beta priors for better bounded predictions (between 0 and 1)
+    lower, upper = beta_priors_uncertainty(mean, std, lower_percentile=0.025, upper_percentile=0.975)
+
+# Standard model
+model_standard = GPPowerLaw(X, y, likelihood, epsilon_min=0.05, with_priors=True)
+likelihood_standard, model_standard, _ = models.train_gp(likelihood, model_standard, X, y)
+
+# Matérn kernel model
+model_matern = GPMatern(X, y, likelihood, epsilon_min=0.05, with_priors=True)
+likelihood_matern, model_matern, _ = models.train_gp(likelihood, model_matern, X, y)
+
+# Compare predictions
+with torch.no_grad():
+    test_x = torch.linspace(50, 30000, 29950).long()
+    
+    # Standard model predictions
+    predictions_standard = likelihood_standard(model_standard(test_x))
+    mean_standard = predictions_standard.mean.numpy()
+    std_standard = predictions_standard.stddev.numpy()
+    lower_standard, upper_standard = priors.truncated_normal_uncertainty(0.0, 1.0, mean_standard, std_standard, 0.025, 0.975)
+    
+    # Matérn model predictions
+    predictions_matern = likelihood_matern(model_matern(test_x))
+    mean_matern = predictions_matern.mean.numpy()
+    std_matern = predictions_matern.stddev.numpy()
+    lower_matern, upper_matern = priors.truncated_normal_uncertainty(0.0, 1.0, mean_matern, std_matern, 0.025, 0.975)

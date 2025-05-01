@@ -151,4 +151,69 @@ def train_gp_matern(likelihood, model, X_train, y_train, max_iters=1000, lr=0.01
         likelihood = likelihood.to('cpu')
     model.eval()
     likelihood.eval()
-    return likelihood, model, losses 
+    return likelihood, model, losses
+
+
+import torch
+import gpytorch
+from gpytorch.kernels import MaternKernel, ScaleKernel
+
+class GPMatern12(gpytorch.models.ExactGP):
+    """Gaussian Process with Matern 1/2 kernel (less smooth)"""
+    def __init__(self, train_x, train_y, likelihood, epsilon_min=0.05, with_priors=True):
+        super(GPMatern12, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = ScaleKernel(
+            MaternKernel(nu=0.5, ard_num_dims=1)
+        )
+        
+        # Set priors if requested
+        if with_priors:
+            self.mean_module.constant.constraint = gpytorch.constraints.Interval(0.5, 1.0)
+            self.covar_module.base_kernel.lengthscale_prior = gpytorch.priors.GammaPrior(3.0, 6.0)
+            self.covar_module.outputscale_prior = gpytorch.priors.GammaPrior(2.0, 0.15)
+            
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+class GPMatern32(gpytorch.models.ExactGP):
+    """Gaussian Process with Matern 3/2 kernel (medium smoothness)"""
+    def __init__(self, train_x, train_y, likelihood, epsilon_min=0.05, with_priors=True):
+        super(GPMatern32, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = ScaleKernel(
+            MaternKernel(nu=1.5, ard_num_dims=1)
+        )
+        
+        # Set priors if requested
+        if with_priors:
+            self.mean_module.constant.constraint = gpytorch.constraints.Interval(0.5, 1.0)
+            self.covar_module.base_kernel.lengthscale_prior = gpytorch.priors.GammaPrior(3.0, 6.0)
+            self.covar_module.outputscale_prior = gpytorch.priors.GammaPrior(2.0, 0.15)
+            
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+
+class GPMatern52(gpytorch.models.ExactGP):
+    """Gaussian Process with Matern 5/2 kernel (more smooth)"""
+    def __init__(self, train_x, train_y, likelihood, epsilon_min=0.05, with_priors=True):
+        super(GPMatern52, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = ScaleKernel(
+            MaternKernel(nu=2.5, ard_num_dims=1)
+        )
+        
+        # Set priors if requested
+        if with_priors:
+            self.mean_module.constant.constraint = gpytorch.constraints.Interval(0.5, 1.0)
+            self.covar_module.base_kernel.lengthscale_prior = gpytorch.priors.GammaPrior(3.0, 6.0)
+            self.covar_module.outputscale_prior = gpytorch.priors.GammaPrior(2.0, 0.15)
+            
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
