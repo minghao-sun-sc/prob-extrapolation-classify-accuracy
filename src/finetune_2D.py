@@ -84,3 +84,90 @@ def finetune(labels_path, n, random_state):
     test_auroc = metrics.get_auroc(y_test, test_predictions)
     
     return train_BA, train_auroc, val_BA, val_auroc, test_BA, test_auroc
+
+def save_results(experiments_path, dataset_name, label_names, n, random_state, train_BA, train_auroc, val_BA, val_auroc, test_BA, test_auroc):
+    """Save experiment results to CSV files"""
+    # Create directory if it doesn't exist
+    os.makedirs(experiments_path, exist_ok=True)
+    
+    # Create results dataframe
+    results = []
+    for i, label_name in enumerate(label_names):
+        result = {
+            'dataset': dataset_name,
+            'label': label_name,
+            'n': n,
+            'random_state': random_state,
+            'train_BA': train_BA[i],
+            'train_auroc': train_auroc[i],
+            'val_BA': val_BA[i],
+            'val_auroc': val_auroc[i],
+            'test_BA': test_BA[i],
+            'test_auroc': test_auroc[i]
+        }
+        results.append(result)
+    
+    # Convert to dataframe
+    results_df = pd.DataFrame(results)
+    
+    # Save to CSV
+    output_file = os.path.join(experiments_path, f"{dataset_name}_n={n}_seed={random_state}.csv")
+    results_df.to_csv(output_file, index=False)
+    print(f"Results saved to {output_file}")
+
+def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Fine-tune 2D image classifiers and evaluate performance')
+    parser.add_argument('--experiments_path', type=str, required=True, 
+                        help='Path to save experiment results')
+    parser.add_argument('--labels_path', type=str, required=True, 
+                        help='Path to the directory containing labels.csv')
+    parser.add_argument('--dataset_name', type=str, default=None,
+                        help='Name of the dataset (defaults to the last part of labels_path)')
+    parser.add_argument('--n', type=int, required=True, 
+                        help='Number of training samples to use')
+    parser.add_argument('--random_state', type=int, default=42, 
+                        help='Random seed for reproducibility')
+    
+    args = parser.parse_args()
+    
+    # If dataset_name is not provided, extract it from labels_path
+    if args.dataset_name is None:
+        args.dataset_name = os.path.basename(os.path.normpath(args.labels_path))
+    
+    print(f"Running fine-tuning for {args.dataset_name} with n={args.n} and random_state={args.random_state}")
+    
+    # Get label names from labels.csv
+    labels_file = os.path.join(args.labels_path, 'labels.csv')
+    if not os.path.exists(labels_file):
+        raise FileNotFoundError(f"Labels file not found: {labels_file}")
+    
+    # Read the first row to get label names
+    df = pd.read_csv(labels_file, index_col='study_id', nrows=1)
+    first_label = df.label.iloc[0]
+    # Convert string representation of list to actual list
+    if isinstance(first_label, str):
+        first_label = ast.literal_eval(first_label)
+    
+    # If it's a single label, convert to list
+    if not isinstance(first_label, list):
+        label_names = ['label']
+    else:
+        # For multi-label datasets, use generic names
+        label_names = [f'label_{i}' for i in range(len(first_label))]
+    
+    # Run fine-tuning
+    train_BA, train_auroc, val_BA, val_auroc, test_BA, test_auroc = finetune(
+        args.labels_path, args.n, args.random_state
+    )
+    
+    # Save results
+    save_results(
+        args.experiments_path, args.dataset_name, label_names, args.n, args.random_state,
+        train_BA, train_auroc, val_BA, val_auroc, test_BA, test_auroc
+    )
+    
+    print("Fine-tuning completed successfully!")
+
+if __name__ == "__main__":
+    main()

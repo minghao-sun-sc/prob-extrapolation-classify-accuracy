@@ -1,0 +1,149 @@
+(extra-class) D:\projects\prob-extrapolation-classify-accuracy>python run_improved_model.py
+Available datasets: ['BUSI_Malignant', 'ChestXRay14_Infiltration', 'ChestXRay14_Pneumonia', 'OASIS3_Alzheimer', 'TMED2_AS']
+
+Processing dataset: BUSI_Malignant
+Training on 4 samples, testing on 2 samples
+Training standard model with RBF kernel...
+Iter 1/100 - Loss: 7995.442
+Iter 21/100 - Loss: 1718.154
+Iter 41/100 - Loss: 595.370
+Iter 61/100 - Loss: 334.916
+Iter 81/100 - Loss: 231.658
+Training improved model with Matérn 2.5 kernel...
+Iter 1/100 - Loss: 14793.967
+Iter 21/100 - Loss: 3176.649
+Iter 41/100 - Loss: 1100.903
+Iter 61/100 - Loss: 619.985
+Iter 81/100 - Loss: 429.506
+Training improved model with Beta priors...
+Iter 1/100 - Loss: 8.187
+Iter 21/100 - Loss: 8.187
+Iter 41/100 - Loss: 8.187
+Iter 61/100 - Loss: 8.187
+Iter 81/100 - Loss: 8.187
+
+Test set mean squared error:
+Standard RBF model: 0.000118
+Improved Matérn model: 0.000108
+Improved Beta model: 0.029051
+Results saved to output/BUSI_Malignant_extrapolation.png and output/BUSI_Malignant_predictions.csv
+Completed analysis for BUSI_Malignant
+
+
+Processing dataset: ChestXRay14_Infiltration
+Training on 6 samples, testing on 3 samples
+Training standard model with RBF kernel...
+Iter 1/100 - Loss: 58186.672
+Iter 21/100 - Loss: 12561.038
+Iter 41/100 - Loss: 4382.773
+Iter 61/100 - Loss: 2482.303
+Iter 81/100 - Loss: 1728.147
+Training improved model with Matérn 2.5 kernel...
+Iter 1/100 - Loss: 58186.688
+Iter 21/100 - Loss: 12561.050
+Iter 41/100 - Loss: 4382.787
+Iter 61/100 - Loss: 2482.316
+Iter 81/100 - Loss: 1728.160
+Training improved model with Beta priors...
+Iter 1/100 - Loss: 6.582
+Iter 21/100 - Loss: -1.645
+Iter 41/100 - Loss: -2.015
+Iter 61/100 - Loss: -2.291
+Iter 81/100 - Loss: -2.382
+
+Test set mean squared error:
+Standard RBF model: 0.000056
+Improved Matérn model: 0.000055
+Improved Beta model: 0.010026
+Results saved to output/ChestXRay14_Infiltration_extrapolation.png and output/ChestXRay14_Infiltration_predictions.csv
+Completed analysis for ChestXRay14_Infiltration
+
+
+Processing dataset: ChestXRay14_Pneumonia
+Training on 6 samples, testing on 3 samples
+Training standard model with RBF kernel...
+Iter 1/100 - Loss: 58186.562
+Iter 21/100 - Loss: 12560.938
+Iter 41/100 - Loss: 4382.674
+Iter 61/100 - Loss: 2482.206
+Iter 81/100 - Loss: 1728.051
+Training improved model with Matérn 2.5 kernel...
+Iter 1/100 - Loss: 58186.582
+Iter 21/100 - Loss: 12560.948
+Iter 41/100 - Loss: 4382.688
+Iter 61/100 - Loss: 2482.219
+Iter 81/100 - Loss: 1728.064
+Training improved model with Beta priors...
+Iter 1/100 - Loss: 6.448
+Iter 21/100 - Loss: -0.700
+Iter 41/100 - Loss: -1.917
+Iter 61/100 - Loss: -2.306
+Iter 81/100 - Loss: -2.388
+
+Test set mean squared error:
+Standard RBF model: 0.000145
+Improved Matérn model: 0.000126
+Improved Beta model: 0.009008
+Results saved to output/ChestXRay14_Pneumonia_extrapolation.png and output/ChestXRay14_Pneumonia_predictions.csv
+Completed analysis for ChestXRay14_Pneumonia
+
+
+Processing dataset: OASIS3_Alzheimer
+Training on 4 samples, testing on 2 samples
+Training standard model with RBF kernel...
+Iter 1/100 - Loss: 10487.277
+Iter 21/100 - Loss: 2236.841
+Iter 41/100 - Loss: 769.105
+Iter 61/100 - Loss: 430.511
+Iter 81/100 - Loss: 296.783
+Training improved model with Matérn 2.5 kernel...
+Iter 1/100 - Loss: 22595.977
+Iter 21/100 - Loss: 4854.994
+Iter 41/100 - Loss: 1684.394
+Iter 61/100 - Loss: 949.714
+Iter 81/100 - Loss: 658.715
+Training improved model with Beta priors...
+Iter 1/100 - Loss: 8.160
+Iter 21/100 - Loss: 8.160
+Iter 41/100 - Loss: 8.160
+Iter 61/100 - Loss: 8.160
+Iter 81/100 - Loss: 8.160
+
+Test set mean squared error:
+Standard RBF model: 0.000119
+Improved Matérn model: 0.000124
+Improved Beta model: 0.020006
+Results saved to output/OASIS3_Alzheimer_extrapolation.png and output/OASIS3_Alzheimer_predictions.csv
+Completed analysis for OASIS3_Alzheimer
+
+
+Processing dataset: TMED2_AS
+Training on 4 samples, testing on 2 samples
+Training standard model with RBF kernel...
+Iter 1/100 - Loss: 39520.145
+Iter 21/100 - Loss: 8527.908
+Iter 41/100 - Loss: 2973.593
+Iter 61/100 - Loss: 1683.065
+Iter 81/100 - Loss: 1170.991
+Training improved model with Matérn 2.5 kernel...
+Iter 1/100 - Loss: 87279.734
+Iter 21/100 - Loss: 18841.691
+Iter 41/100 - Loss: 6574.585
+Iter 61/100 - Loss: 3724.039
+Iter 81/100 - Loss: 2592.906
+Training improved model with Beta priors...
+Iter 1/100 - Loss: 6.903
+Iter 21/100 - Loss: -0.886
+Iter 41/100 - Loss: -1.042
+Iter 61/100 - Loss: -1.078
+Iter 81/100 - Loss: -1.097
+
+Test set mean squared error:
+Standard RBF model: 0.000315
+Improved Matérn model: 0.000314
+Improved Beta model: 0.011787
+Results saved to output/TMED2_AS_extrapolation.png and output/TMED2_AS_predictions.csv
+Completed analysis for TMED2_AS
+
+
+(extra-class) D:\projects\prob-extrapolation-classify-accuracy>
