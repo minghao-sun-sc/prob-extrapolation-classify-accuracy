@@ -80,6 +80,23 @@ class GPPowerLaw(gpytorch.models.ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(torch.log10(x))
         return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+    
+# ------------------------------------------------------------------
+# Ablation model: SAME kernel / priors as GPPowerLaw
+#                 but with a very simple, unconstrained mean.
+# ------------------------------------------------------------------
+class MyPowerLawMean(means.PowerLawPriorMean):
+    def __init__(self, y_max, epsilon_min=0.0):
+        super().__init__(y_max, epsilon_min)
+        # e.g. remove the sigmoid warp on epsilon, etc.
+
+class GPPowerLawNoMono(GPPowerLaw):
+    def __init__(self, X, y, likelihood, **kwargs):
+        super().__init__(X, y, likelihood, **kwargs)
+        # immediately replace the mean_module
+        self.mean_module = MyPowerLawMean(torch.max(y).item(), epsilon_min=0.0)
+
+
 
 class GPArctan(gpytorch.models.ExactGP):
     def __init__(self, X, y, likelihood, epsilon_min=0.0, with_priors=True):
