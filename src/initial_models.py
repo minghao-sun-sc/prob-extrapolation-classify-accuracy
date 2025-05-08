@@ -5,8 +5,8 @@ import gpytorch
 import sys
 # Importing our custom module(s)
 sys.path.append('../src/')
-import means
-import priors
+from .means import PowerLawPriorMean, ArctanPriorMean
+from .priors import TruncatedNormalPrior, UniformPrior, my_truncnorm, calc_outputscale_prior
 
 class PowerLaw(nn.Module):
     def __init__(self, y_max, epsilon_min=0.0):
@@ -46,7 +46,7 @@ class GPPowerLaw(gpytorch.models.ExactGP):
     def __init__(self, X, y, likelihood, epsilon_min=0.0, with_priors=True):
         super(GPPowerLaw, self).__init__(X, y, likelihood)
         # Mean module
-        self.mean_module = means.PowerLawPriorMean(torch.max(y).item(), epsilon_min)
+        self.mean_module = PowerLawPriorMean(torch.max(y).item(), epsilon_min)
         # Covariance module
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         if with_priors:
@@ -54,27 +54,27 @@ class GPPowerLaw(gpytorch.models.ExactGP):
             # (e.g., a prior for the noise standard deviation instead of variance)
             self.register_prior(
                 'noise_std_prior', 
-                priors.TruncatedNormalPrior(0, np.inf, 0.01, 0.01), 
+                TruncatedNormalPrior(0, np.inf, 0.01, 0.01), 
                 lambda module: module.likelihood.noise.sqrt()
             )
             # Calculate optimal outputscale prior
-            tau_prior = priors.my_truncnorm(0, np.inf, 0.01, 0.01)
+            tau_prior = my_truncnorm(0, np.inf, 0.01, 0.01)
             desired_low = (1/2)*((1-epsilon_min)-torch.max(y).item())
             desired_high = (3/4)*((1-epsilon_min)-torch.max(y).item())
-            m, s = priors.calc_outputscale_prior(tau_prior, desired_low, desired_high)
+            m, s = calc_outputscale_prior(tau_prior, desired_low, desired_high)
             self.register_prior(
                 'outputscale_std_prior', 
-                priors.TruncatedNormalPrior(0, np.inf, m, s), 
+                TruncatedNormalPrior(0, np.inf, m, s), 
                 lambda module: module.covar_module.outputscale.sqrt()
             )
             self.register_prior(
                 'lengthscale_prior', 
-                priors.TruncatedNormalPrior(0, np.inf, -1.23, 2.12), 
+                TruncatedNormalPrior(0, np.inf, -1.23, 2.12), 
                 lambda module: module.covar_module.base_kernel.lengthscale
             )
             self.register_prior(
                 'epsilon_prior',
-                priors.UniformPrior(self.mean_module.epsilon_min, (1.0-self.mean_module.y_max)), 
+                UniformPrior(self.mean_module.epsilon_min, (1.0-self.mean_module.y_max)), 
                 lambda module: module.mean_module.epsilon_min + (1.0-module.mean_module.y_max-module.mean_module.epsilon_min)*torch.sigmoid(module.mean_module.epsilon)
             )
             
@@ -87,7 +87,7 @@ class GPPowerLaw(gpytorch.models.ExactGP):
 # Ablation model: SAME kernel / priors as GPPowerLaw
 #                 but with a very simple, unconstrained mean.
 # ------------------------------------------------------------------
-class MyPowerLawMean(means.PowerLawPriorMean):
+class MyPowerLawMean(PowerLawPriorMean):
     def __init__(self, y_max, epsilon_min=0.0):
         super().__init__(y_max, epsilon_min)
         # e.g. remove the sigmoid warp on epsilon, etc.
@@ -104,7 +104,7 @@ class GPArctan(gpytorch.models.ExactGP):
     def __init__(self, X, y, likelihood, epsilon_min=0.0, with_priors=True):
         super(GPArctan, self).__init__(X, y, likelihood)
         # Mean module
-        self.mean_module = means.ArctanPriorMean(torch.max(y).item(), epsilon_min)
+        self.mean_module = ArctanPriorMean(torch.max(y).item(), epsilon_min)
         # Covariance module
         self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
         if with_priors:
@@ -112,27 +112,27 @@ class GPArctan(gpytorch.models.ExactGP):
             # (e.g., a prior for the noise standard deviation instead of variance)
             self.register_prior(
                 'noise_std_prior', 
-                priors.TruncatedNormalPrior(0, np.inf, 0.01, 0.01), 
+                TruncatedNormalPrior(0, np.inf, 0.01, 0.01), 
                 lambda module: module.likelihood.noise.sqrt()
             )
             # Calculate optimal outputscale prior
-            tau_prior = priors.my_truncnorm(0, np.inf, 0.01, 0.01)
+            tau_prior = my_truncnorm(0, np.inf, 0.01, 0.01)
             desired_low = (1/2)*((1-epsilon_min)-torch.max(y).item())
             desired_high = (3/4)*((1-epsilon_min)-torch.max(y).item())
-            m, s = priors.calc_outputscale_prior(tau_prior, desired_low, desired_high)
+            m, s = calc_outputscale_prior(tau_prior, desired_low, desired_high)
             self.register_prior(
                 'outputscale_std_prior', 
-                priors.TruncatedNormalPrior(0, np.inf, m, s), 
+                TruncatedNormalPrior(0, np.inf, m, s), 
                 lambda module: module.covar_module.outputscale.sqrt()
             )
             self.register_prior(
                 'lengthscale_prior', 
-                priors.TruncatedNormalPrior(0, np.inf, -1.23, 2.12), 
+                TruncatedNormalPrior(0, np.inf, -1.23, 2.12), 
                 lambda module: module.covar_module.base_kernel.lengthscale
             )
             self.register_prior(
                 'epsilon_prior',
-                priors.UniformPrior(self.mean_module.epsilon_min, (1.0-self.mean_module.y_max)), 
+                UniformPrior(self.mean_module.epsilon_min, (1.0-self.mean_module.y_max)), 
                 lambda module: module.mean_module.epsilon_min + (1.0-module.mean_module.y_max-module.mean_module.epsilon_min)*torch.sigmoid(module.mean_module.epsilon)
             )
         

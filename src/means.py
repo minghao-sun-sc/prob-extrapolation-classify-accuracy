@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import gpytorch
 # Importing our custom module(s)
-import priors
+
 
 class PowerLawPriorMean(gpytorch.means.Mean):
     def __init__(self, y_max, epsilon_min=0.0):
