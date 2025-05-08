@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath('../src'))
 sys.path.insert(0, os.path.abspath('../src'))
 
 # Now import our modules
-import models
+import initial_models
 import beta_priors
 import matern_kernels
 import combo_kernels
@@ -246,8 +246,8 @@ def experiment_model_ensemble(X, y, X_test, models_beta, likelihoods_beta, model
     # Baseline model
     print("Training baseline RBF model")
     likelihood_rbf = gpytorch.likelihoods.GaussianLikelihood()
-    model_rbf = models.GPPowerLaw(X, y, likelihood_rbf, epsilon_min=0.05, with_priors=True)
-    likelihood_rbf, model_rbf, _ = models.train_gp(likelihood_rbf, model_rbf, X, y, max_iters=20000, lr=0.01)
+    model_rbf = initial_models.GPPowerLaw(X, y, likelihood_rbf, epsilon_min=0.05, with_priors=True)
+    likelihood_rbf, model_rbf, _ = initial_models.train_gp(likelihood_rbf, model_rbf, X, y, max_iters=20000, lr=0.01)
     
     model_rbf.eval()
     likelihood_rbf.eval()

@@ -12,7 +12,7 @@ import sys
 sys.path.append('src')
 
 # Import custom modules
-from src import models
+from . import initial_models
 from src import means
 from src import priors
 from src import matern_kernels
@@ -109,7 +109,7 @@ def test_apex_gp_on_architectures():
             
             # 1. Standard RBF kernel
             likelihood_rbf = gpytorch.likelihoods.GaussianLikelihood()
-            model_rbf = models.GPPowerLaw(X_train_scaled, y_train, likelihood_rbf, epsilon_min=0.05, with_priors=True)
+            model_rbf = initial_models.GPPowerLaw(X_train_scaled, y_train, likelihood_rbf, epsilon_min=0.05, with_priors=True)
             
             # 2. Matérn 2.5 kernel
             likelihood_matern = gpytorch.likelihoods.GaussianLikelihood()

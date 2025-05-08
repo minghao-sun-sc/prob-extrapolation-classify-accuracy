@@ -9,7 +9,7 @@ import gpytorch
 from torch.distributions import Beta
 import sys
 sys.path.append('../src/')
-from models import GPPowerLaw
+from initial_models import GPPowerLaw
 from matern_kernels import GPPowerLawMatern as GPMatern
 
 class BetaPrior(gpytorch.priors.Prior):

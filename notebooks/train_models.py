@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from models import *
+from initial_models import *
 from priors import *
 from utils import *
 
@@ -21,7 +21,7 @@ if __name__=='__main__':
                 ('Pilot', 'Pilot_short_range.csv')]
     datasets = [('OASIS-3', 'OASIS-3_short_range.csv'),
                 ('Pilot', 'Pilot_short_range.csv')]
-    models = [('PowerLaw', train_PowerLaw), 
+    initial_models = [('PowerLaw', train_PowerLaw), 
               ('Arctan', train_Arctan), 
               ('GPPowerLaw', train_GPPowerLaw), 
               ('GPArctan', train_GPArctan)]
@@ -44,7 +44,7 @@ if __name__=='__main__':
         for label_index, label_name in enumerate(labels[datasets_index]):
             # Split data
             X_train, y_train, X_test, y_test = split_df(df, index=label_index)
-            for model_name, training_func in models:
+            for model_name, training_func in initial_models:
                 print(model_name)
                 func_results = training_func(X_train, y_train)
                 if len(func_results) == 2: model, losses = func_results

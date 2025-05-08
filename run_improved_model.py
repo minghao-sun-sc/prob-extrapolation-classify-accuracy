@@ -14,7 +14,7 @@ from scipy import stats
 import sys
 sys.path.append('src')
 # Import modules from src directory
-from src import models
+from . import initial_models
 from src import means 
 from src import priors
 from src import matern_kernels
@@ -156,7 +156,7 @@ def train_and_evaluate_models(X, y, dataset_name):
     # 1. Train standard GP with RBF kernel and power law mean
     # -----------------------------
     likelihood_rbf = gpytorch.likelihoods.GaussianLikelihood()
-    model_rbf = models.GPPowerLaw(X_train, y_train, likelihood_rbf, epsilon_min=0.05, with_priors=True)
+    model_rbf = initial_models.GPPowerLaw(X_train, y_train, likelihood_rbf, epsilon_min=0.05, with_priors=True)
     
     # Train the model
     print("Training standard model with RBF kernel...")
