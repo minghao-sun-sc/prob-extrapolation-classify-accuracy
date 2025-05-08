@@ -10,7 +10,7 @@ import glob
 sys.path.append(os.path.abspath('.'))
 
 # Import project modules
-import models
+import initial_models
 import beta_priors
 import matern_kernels
 import combo_kernels
@@ -99,8 +99,8 @@ def main():
         # Define models to compare
         model_classes = [
             # Original models
-            models.GPPowerLaw,
-            models.GPArctan,
+            initial_models.GPPowerLaw,
+            initial_models.GPArctan,
             
             # Matern kernel models
             matern_kernels.GPMatern12,

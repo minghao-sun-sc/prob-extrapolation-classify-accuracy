@@ -10,7 +10,7 @@ import glob
 sys.path.append(os.path.abspath('.'))
 
 # Import project modules
-import models
+import initial_models
 import beta_priors
 import priors  # For truncated_normal_uncertainty
 
@@ -99,7 +99,7 @@ def train_and_evaluate_model(X, y, model_class, model_name, with_priors=True):
     model = model_class(X_train, y_train, likelihood, epsilon_min=0.05, with_priors=with_priors)
     
     # Train model
-    likelihood, model, _ = models.train_gp(likelihood, model, X_train, y_train, max_iters=2000, lr=0.01)
+    likelihood, model, _ = initial_models.train_gp(likelihood, model, X_train, y_train, max_iters=2000, lr=0.01)
     
     # Evaluate model
     model.eval()
@@ -174,12 +174,12 @@ def main():
         
         # Train and evaluate GPPowerLaw model (original from paper)
         power_law_model, power_law_likelihood, power_law_mse = train_and_evaluate_model(
-            X, y, models.GPPowerLaw, "GPPowerLaw"
+            X, y, initial_models.GPPowerLaw, "GPPowerLaw"
         )
         
         # Train and evaluate GPArctan model (original from paper)
         arctan_model, arctan_likelihood, arctan_mse = train_and_evaluate_model(
-            X, y, models.GPArctan, "GPArctan"
+            X, y, initial_models.GPArctan, "GPArctan"
         )
         
         print("\nReproduction completed successfully!")

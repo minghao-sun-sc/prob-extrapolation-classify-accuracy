@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import gpytorch
 # Importing our custom module(s)
 import metrics
-import models
+import initial_models
 import priors
 
 def makedir_if_not_exist(directory):
@@ -124,7 +124,7 @@ def evaluate(model, device, loss_func, data_loader):
 # TODO: Should I create a seperate file for plotting helper functions?
 def print_metrics(model_objects, y_train, X_test, y_test, verbose=1):
     model, *likelihood_objects = model_objects
-    label_map = { models.PowerLaw: 'Power law', models.Arctan: 'Arctan', models.GPPowerLaw: 'GP pow', models.GPArctan: 'GP arc' }
+    label_map = { initial_models.PowerLaw: 'Power law', initial_models.Arctan: 'Arctan', initial_models.GPPowerLaw: 'GP pow', initial_models.GPArctan: 'GP arc' }
     label = label_map.get(type(model), 'Unknown') # Default label is 'Unknown' 
     if label.startswith('GP'):
         likelihood, = likelihood_objects
@@ -157,7 +157,7 @@ def plot_data(ax, X_train, y_train, X_test, y_test):
     ax.scatter(X_test, y_test, color='black', alpha=0.3, label='Ground truth')
 
 def load_model(name, path, X_train, y_train):
-    model_map = { 'PowerLaw': models.PowerLaw, 'Arctan': models.Arctan, 'GPPowerLaw': models.GPPowerLaw, 'GPArctan': models.GPArctan }
+    model_map = { 'PowerLaw': initial_models.PowerLaw, 'Arctan': initial_models.Arctan, 'GPPowerLaw': initial_models.GPPowerLaw, 'GPArctan': initial_models.GPArctan }
     model_class = model_map[name]
     if name.startswith('GP'):
         likelihood = gpytorch.likelihoods.GaussianLikelihood()
@@ -174,7 +174,7 @@ def load_model(name, path, X_train, y_train):
 
 def plot_model(ax, model_objects, color='black'):
     model, *likelihood_objects = model_objects
-    label_map = { models.PowerLaw: 'Power law', models.Arctan: 'Arctan', models.GPPowerLaw: 'GP pow (ours)', models.GPArctan: 'GP arc (ours)' }
+    label_map = { initial_models.PowerLaw: 'Power law', initial_models.Arctan: 'Arctan', initial_models.GPPowerLaw: 'GP pow (ours)', initial_models.GPArctan: 'GP arc (ours)' }
     label = label_map.get(type(model), 'Unknown') # Default label is 'Unknown' 
     if label.startswith('GP'):
         likelihood, = likelihood_objects
@@ -203,7 +203,7 @@ def format_plot(ax, label):
     
 def print_coverage(model_objects, size, test_auroc):
     model, *likelihood_objects = model_objects
-    label_map = { models.PowerLaw: 'Power law', models.Arctan: 'Arctan', models.GPPowerLaw: 'GP pow', models.GPArctan: 'GP arc' }
+    label_map = { initial_models.PowerLaw: 'Power law', initial_models.Arctan: 'Arctan', initial_models.GPPowerLaw: 'GP pow', initial_models.GPArctan: 'GP arc' }
     label = label_map.get(type(model), 'Unknown') # Default label is 'Unknown' 
     if label.startswith('GP'):
         likelihood, = likelihood_objects
