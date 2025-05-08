@@ -2,7 +2,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import gpytorch
+import sys
 # Importing our custom module(s)
+sys.path.append('../src/')
 import means
 import priors
 
